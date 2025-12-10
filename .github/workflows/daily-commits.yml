@@ -1,0 +1,43 @@
+name: daily-commits
+
+on:
+  schedule:
+    # Runs every day at 09:00 UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  commit-streak:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Make 5 commits
+        run: |
+          mkdir -p notes
+          messages=(
+            "Search flow refinement"
+            "UI polish and gradients"
+            "Responsive tweaks"
+            "Branding and icons"
+            "Docs and notes update"
+          )
+
+          for i in {0..4}; do
+            note_index=$((i+1))
+            msg=${messages[$i]}
+            echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') | Commit ${note_index}: ${msg}" >> notes/daily-notes.md
+            git add notes/daily-notes.md
+            git commit -m "chore: ${msg} (daily note ${note_index})"
+          done
+
+      - name: Push
+        run: git push origin HEAD
